@@ -1,0 +1,64 @@
+func main() {
+	client := typesense.NewClient(
+		typesense.WithServer("http://localhost:8108"),
+		typesense.WithAPIKey("Hu52dwsas2AdxdE"),
+	)
+
+	// build schema
+	sort := "num_employees"
+	schema := &api.CollectionSchema{
+		Name: "companies",
+		Fields: []api.Field{
+			{
+				Name: "company_name",
+				Type: "string",
+			},
+			{
+				Name: "num_employees",
+				Type: "int32",
+			},
+			{
+				Name: "country",
+				Type: "string",
+			},
+		},
+		DefaultSortingField: &sort,
+	}
+
+	_, err := client.Collections().Create(schema)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	// index a document
+	document := struct {
+		ID           string `json:"id"`
+		CompanyName  string `json:"company_name"`
+		NumEmployees int    `json:"num_employees"`
+		Country      string `json:"country"`
+	}{
+		ID:           "456",
+		CompanyName:  "shark Industries",
+		NumEmployees: 5215,
+		Country:      "USA",
+	}
+
+	_, err = client.Collection("companies").Documents().Create(document)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	// search collection
+	sortBy := "num_employees:desc"
+	searchParameters := &api.SearchCollectionParams{
+		Q:        "stark",
+		QueryBy:  "company_name",
+		FilterBy: pointer.String("num_employees:>100"),
+		SortBy:   &sortBy,
+	}
+
+	_, err = client.Collection("companies").Documents().Search(searchParameters)
+	if err != nil {
+		fmt.Println(err)
+	}
+}
